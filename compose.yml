@@ -1,0 +1,76 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: coffee-meter-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: cafeman
+      MYSQL_USER: coffee_user
+      MYSQL_PASSWORD: coffee_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - coffee-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coffee-meter-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "mysql://coffee_user:coffee_password@mysql:3306/cafeman"
+      NODE_ENV: development
+    volumes:
+      - ./cafeman:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - coffee-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm run dev
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: coffee-meter-pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: coffee_user
+      PMA_PASSWORD: coffee_password
+      MYSQL_ROOT_PASSWORD: rootpassword
+      # 日本語化
+      PMA_LANGUAGE: ja
+      # テーマ設定
+      PMA_THEME: pmahomme
+      # タイムアウト延長
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 256M
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    networks:
+      - coffee-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  coffee-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
