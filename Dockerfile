@@ -4,11 +4,9 @@ WORKDIR /app
 
 # 依存関係のインストール
 COPY ./cafeman/package*.json ./
+COPY ./cafeman/prisma ./prisma/
+RUN npx prisma generate
 RUN npm i
-
-# Prismaクライアント生成
-# COPY prisma ./prisma/
-# RUN npx prisma generate
 
 # アプリケーションコピー
 COPY ./cafeman .
