@@ -1,4 +1,4 @@
-.PHONY: setup dev build down clean
+.PHONY: setup dev build down clean test
 
 setup:
 	@echo "🚀 初回セットアップ"
@@ -29,3 +29,11 @@ logs:
 db-shell:
 	@echo "🗄️ MySQLに接続"
 	docker exec -it coffee-meter-mysql mysql -u coffee_user -pcoffee_password coffee_meter
+
+test:
+	@echo "🔧 Testing..."
+	docker-compose exec app npm test
+
+fmt:
+	@echo "🔧 Formatting..."
+	docker-compose exec app npm run format
